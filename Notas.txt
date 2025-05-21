@@ -1,0 +1,1 @@
+Actualizar data.db también dentro de /static
