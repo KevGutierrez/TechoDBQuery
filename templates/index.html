@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Record Lookup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 800px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #666;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+        input[type="text"] {
+            padding: 5px;
+            width: 200px;
+        }
+        select {
+            padding: 5px;
+        }
+        input[type="submit"] {
+            padding: 6px 12px;
+        }
+        p.no-results {
+            font-style: italic;
+            color: #900;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Records</h1>
+    <form method="post">
+        <label for="criteria">Search by:</label>
+        <select name="criteria" id="criteria">
+            <option value="CEDULA">CEDULA</option>
+            <option value="CONTACTO">CONTACTO</option>
+        </select>
+        <input type="text" name="value" required placeholder="Enter your search term" />
+        <input type="submit" value="Search" />
+    </form>
+
+    {% if results %}
+        <table>
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif results is not none %}
+        <p class="no-results">No results found.</p>
+    {% endif %}
+</body>
+</html>
