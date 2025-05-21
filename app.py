@@ -14,23 +14,22 @@ def query_database(field, value):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    results = []
+    results = None
     headers = []
+    query_made = False
+
     if request.method == 'POST':
-        criteria = request.form['criteria']  # 'CEDULA' or 'CONTACTO'
+        query_made = True
+        criteria = request.form['criteria']
         value = request.form['value']
 
         conn = sqlite3.connect('data.db')
         cursor = conn.cursor()
-
-        query = f"SELECT * FROM records WHERE {criteria} = ?"
-        cursor.execute(query, (value,))
+        cursor.execute(f"SELECT * FROM records WHERE [{criteria}] = ?", (value,))
         results = cursor.fetchall()
-
-        # Get column names
         headers = [description[0] for description in cursor.description]
-
         conn.close()
-    return render_template('index.html', results=results, headers=headers)
+
+    return render_template('index.html', results=results, headers=headers, query_made=query_made)
 if __name__ == '__main__':
     app.run(debug=True)

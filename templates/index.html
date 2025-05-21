@@ -1,79 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Record Lookup</title>
+    <title>Consulta de Registros</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            max-width: 800px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        form {
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            width: 100px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5em;
             margin-bottom: 20px;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        th, td {
-            border: 1px solid #666;
-            padding: 8px;
-            text-align: left;
+
+        label, select, input[type="text"] {
+            font-size: 1em;
         }
-        th {
-            background-color: #eee;
+
+        select, input[type="text"], input[type="submit"] {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
-        input[type="text"] {
-            padding: 5px;
-            width: 200px;
-        }
-        select {
-            padding: 5px;
-        }
+
         input[type="submit"] {
-            padding: 6px 12px;
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
         }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .estado-badge {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 12px;
+            color: white;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .estado-encuestado {
+            background-color: #007BFF;
+        }
+
+        .estado-caracterizado {
+            background-color: #800080;
+        }
+
+        .estado-asignado {
+            background-color: #28a745;
+        }
+
+        table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 0.95em;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            width: 40%;
+        }
+
         p.no-results {
-            font-style: italic;
+            text-align: center;
             color: #900;
+            font-style: italic;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.3em;
+            }
+
+            input, select {
+                font-size: 1em;
+            }
+
+            .estado-badge {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Search Records</h1>
-    <form method="post">
-        <label for="criteria">Search by:</label>
-        <select name="criteria" id="criteria">
-            <option value="CEDULA">CEDULA</option>
-            <option value="CONTACTO">CONTACTO</option>
-        </select>
-        <input type="text" name="value" required placeholder="Enter your search term" />
-        <input type="submit" value="Search" />
-    </form>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo" />
 
-    {% if results %}
-        <table>
-            <thead>
-                <tr>
-                    {% for header in headers %}
-                        <th>{{ header }}</th>
+    <div class="container">
+        <h1>Consulta de Registros</h1>
+        <form method="post">
+            <label for="criteria">Buscar por:</label>
+            <select name="criteria" id="criteria">
+                <option value="CEDULA">CEDULA</option>
+                <option value="CONTACTO 1">CONTACTO (Celular)</option>
+            </select>
+            <input type="text" name="value" required placeholder="Ingresa el valor a buscar" />
+            <input type="submit" value="Buscar" />
+        </form>
+
+        {% if results %}
+            {% set estado_index = headers.index('ESTADO') %}
+            {% set estado_value = results[0][estado_index] %}
+
+            {% if estado_value == 'Encuestado' %}
+                {% set estado_class = 'estado-badge estado-encuestado' %}
+            {% elif estado_value == 'Caracterizado' %}
+                {% set estado_class = 'estado-badge estado-caracterizado' %}
+            {% elif estado_value == 'Asignado' %}
+                {% set estado_class = 'estado-badge estado-asignado' %}
+            {% else %}
+                {% set estado_class = 'estado-badge' %}
+            {% endif %}
+
+            <div class="{{ estado_class }}">
+                {{ estado_value }}
+            </div>
+
+            <table>
+                <tbody>
+                    {% for i in range(headers|length) %}
+                        {% if i != estado_index %}
+                            <tr>
+                                <th>{{ headers[i] }}</th>
+                                <td>{{ results[0][i] }}</td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in results %}
-                    <tr>
-                        {% for cell in row %}
-                            <td>{{ cell }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% elif results is not none %}
-        <p class="no-results">No results found.</p>
-    {% endif %}
+                </tbody>
+            </table>
+        {% elif query_made %}
+            <p class="no-results">No se encontraron resultados.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
