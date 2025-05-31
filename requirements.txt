@@ -1,1 +1,1 @@
-Flaskgunicornpandasopenpyxl
+Flaskgunicornpandasopenpyxlrequests==2.31.0
