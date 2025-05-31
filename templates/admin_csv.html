@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Vista CSV</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0092DD;
+            font-family: 'Fredoka', sans-serif;
+            margin-bottom: 1.5rem;
+        }
+        .download-btn {
+            display: inline-block;
+            background: #0092DD;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #0092DD;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registros del Log CSV</h1>
+
+        <a class="download-btn" href="{{ url_for('admin_download_csv') }}">⬇️ Descargar CSV</a>
+
+        {% if comments and comments|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre</th>
+                        <th>Comunidad</th>
+                        <th>Comentario</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comment in comments %}
+                        <tr>
+                            <td>{{ comment.cedula or 'N/A' }}</td>
+                            <td>{{ comment.nombre or 'N/A' }}</td>
+                            <td>{{ comment.comunidad or 'N/A' }}</td>
+                            <td>{{ comment.comment or '' }}</td>
+                            <td>{{ comment.timestamp or 'N/A' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-msg">No hay comentarios en el archivo CSV.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

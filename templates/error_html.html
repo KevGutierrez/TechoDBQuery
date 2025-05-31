@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Error {{ error_code }}</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 600px;
+            text-align: center;
+        }
+        .error-code {
+            font-size: 4rem;
+            color: #0092DD;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: bold;
+        }
+        .message {
+            font-size: 1.2rem;
+            color: #333;
+            margin: 1rem 0 2rem;
+        }
+        .home-link {
+            display: inline-block;
+            background: #0092DD;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .home-link:hover {
+            background: #007CB5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">{{ error_code }}</div>
+        <div class="message">{{ error_message }}</div>
+        <a href="{{ url_for('index') }}" class="home-link">← Volver al inicio</a>
+    </div>
+</body>
+</html>
