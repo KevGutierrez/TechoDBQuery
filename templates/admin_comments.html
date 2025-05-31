@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}Administrar Comentarios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold">Comentarios no sincronizados</h3>
+    <p class="text-muted">Total: {{ total_comments }}</p>
+  </div>
+  <a href="/admin/csv/download" class="btn btn-outline-primary">
+    <i class="bi bi-download"></i> Descargar CSV
+  </a>
+</div>
+
+<div class="mb-5">
+  <h5 class="mb-3">Archivos de comentarios subidos desde dispositivos:</h5>
+  {% if txt_files %}
+    <ul class="list-group">
+      {% for file in txt_files %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ file }}
+        <a href="/admin/comments/{{ file }}" class="btn btn-sm btn-outline-secondary">Ver contenido</a>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No hay archivos subidos aún.</p>
+  {% endif %}
+</div>
+
+<div>
+  <h5 class="mb-3">Registro actual de comentarios (CSV):</h5>
+  {% if comments %}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Comunidad</th>
+            <th>Comentario</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comments %}
+          <tr>
+            <td>{{ c.cedula }}</td>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.comunidad }}</td>
+            <td>{{ c.comment }}</td>
+            <td>{{ c.timestamp }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">No hay comentarios registrados aún.</p>
+  {% endif %}
+</div>
+{% endblock %}

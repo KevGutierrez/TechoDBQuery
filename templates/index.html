@@ -1,184 +1,171 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Consulta de Registros</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9fafb;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 600px;
-            background: #fff;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .logo {
-            width: 100px;
-            margin: 20px auto;
-            display: block;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 1.5em;
-            margin-bottom: 20px;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        label, select, input[type="text"] {
-            font-size: 1em;
-        }
-
-        select, input[type="text"], input[type="submit"] {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
-
-        input[type="submit"] {
-            background-color: #007BFF;
-            color: white;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-
-        .estado-badge {
-            margin-top: 20px;
-            padding: 12px 20px;
-            font-size: 1.2em;
-            font-weight: bold;
-            text-align: center;
-            border-radius: 12px;
-            color: white;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .estado-encuestado {
-            background-color: #007BFF;
-        }
-
-        .estado-caracterizado {
-            background-color: #800080;
-        }
-
-        .estado-asignado {
-            background-color: #28a745;
-        }
-
-        table {
-            margin-top: 20px;
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-            font-size: 0.95em;
-        }
-
-        th {
-            background-color: #f0f0f0;
-            width: 40%;
-        }
-
-        p.no-results {
-            text-align: center;
-            color: #900;
-            font-style: italic;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.3em;
-            }
-
-            input, select {
-                font-size: 1em;
-            }
-
-            .estado-badge {
-                font-size: 1em;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Consulta de Registros - TECHO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f9f9f9;
+    }
+    h1, .btn, .form-label {
+      font-family: 'Fredoka', sans-serif;
+    }
+    .estado-caracterizado { background-color: #954B9722; color: #954B97; border-radius: 8px; padding: 4px 8px; }
+    .estado-encuestado   { background-color: #0092DD22; color: #0092DD; border-radius: 8px; padding: 4px 8px; }
+    .estado-preasignado  { background-color: #FDC53322; color: #FDC533; border-radius: 8px; padding: 4px 8px; }
+    .estado-asignado     { background-color: #2FAC6622; color: #2FAC66; border-radius: 8px; padding: 4px 8px; }
+    .estado-inactivo     { background-color: #E9436222; color: #E94362; border-radius: 8px; padding: 4px 8px; }
+    .small-label {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    .card:hover {
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo" />
-
-    <div class="container">
-        <h1>Consulta de Registros</h1>
-        <form method="post">
-            <label for="criteria">Buscar por:</label>
-            <select name="criteria" id="criteria">
-                <option value="CEDULA">CEDULA</option>
-                <option value="CONTACTO 1">CONTACTO (Celular)</option>
-            </select>
-            <input type="text" name="value" required placeholder="Ingresa el valor a buscar" />
-            <input type="submit" value="Buscar" />
-        </form>
-
-        {% if results %}
-            {% set estado_index = headers.index('ESTADO') %}
-            {% set estado_value = results[0][estado_index] %}
-
-            {% if estado_value == 'Encuestado' %}
-                {% set estado_class = 'estado-badge estado-encuestado' %}
-            {% elif estado_value == 'Caracterizado' %}
-                {% set estado_class = 'estado-badge estado-caracterizado' %}
-            {% elif estado_value == 'Asignado' %}
-                {% set estado_class = 'estado-badge estado-asignado' %}
-            {% else %}
-                {% set estado_class = 'estado-badge' %}
-            {% endif %}
-
-            <div class="{{ estado_class }}">
-                {{ estado_value }}
-            </div>
-
-            <table>
-                <tbody>
-                    {% for i in range(headers|length) %}
-                        {% if i != estado_index %}
-                            <tr>
-                                <th>{{ headers[i] }}</th>
-                                <td>{{ results[0][i] }}</td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% elif query_made %}
-            <p class="no-results">No se encontraron resultados.</p>
-        {% endif %}
+  <div class="container py-4">
+    <div class="text-center mb-4">
+      <img src="/static/logo.png" alt="Logo" height="80">
+      <h1 class="mt-2">Consulta de Registros</h1>
+      {% if db_info.last_modified %}
+        <p class="small-label">Última sync: {{ db_info.last_modified.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+      {% endif %}
     </div>
+
+    <form id="search-form" class="mb-4">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label for="field" class="form-label">Buscar por</label>
+          <select class="form-select" id="field" name="field">
+            <option value="CEDULA">CÉDULA</option>
+            <option value="CONTACTO 1">CONTACTO (Celular)</option>
+            <option value="NOMBRE COMPLETO">NOMBRE</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label for="value" class="form-label">Valor</label>
+          <input type="text" class="form-control" id="value" name="value" placeholder="Ingrese valor de búsqueda">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Buscar</button>
+        </div>
+      </div>
+
+      <div class="row g-2 mt-3">
+        <div class="col-md-6">
+          <label for="comunidad" class="form-label">Filtrar por Comunidad</label>
+          <select class="form-select" id="comunidad" name="comunidad">
+            <option value="Todas">Todas</option>
+            <option value="La Nueva Jerusalén">La Nueva Jerusalén</option>
+            <option value="La Honda">La Honda</option>
+            <option value="Granizal">Granizal</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="estado" class="form-label">Filtrar por Estado</label>
+          <select class="form-select" id="estado" name="estado">
+            <option value="Todos">Todos</option>
+            <option value="caracterizado">Caracterizado</option>
+            <option value="encuestado">Encuestado</option>
+            <option value="preasignado">Preasignado</option>
+            <option value="asignado">Asignado</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </form>
+
+    <div id="recent-searches" class="mb-4"></div>
+
+    <div id="results-container"></div>
+
+    {% if has_unsynced_comments %}
+      <div class="alert alert-warning mt-4">
+        Hay comentarios sin sincronizar. <a href="/comments">Ver comentarios</a>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $('#search-form').on('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        field: $('#field').val(),
+        value: $('#value').val(),
+        filters: {
+          comunidad: $('#comunidad').val(),
+          estado: $('#estado').val()
+        }
+      };
+
+      $.post({
+        url: '/search',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: res => {
+          const container = $('#results-container');
+          container.empty();
+          if (res.results.length === 0) {
+            container.append('<p class="text-muted">No se encontraron resultados.</p>');
+          } else if (res.results.length > 1 && data.field === 'NOMBRE COMPLETO') {
+            res.results.forEach(r => {
+              container.append(`
+                <div class="card mb-2 p-2" onclick="showDetails(${encodeURIComponent(JSON.stringify(r))})">
+                  <strong>${r["NOMBRE COMPLETO"]}</strong><br>
+                  <span class="text-muted">${r.COMUNIDAD} | ${r.CEDULA}</span>
+                </div>`);
+            });
+          } else {
+            showDetails(res.results[0]);
+          }
+        },
+        error: err => alert('Error en búsqueda')
+      });
+    });
+
+    function showDetails(record) {
+      const estadoColor = record.ESTADO?.toLowerCase();
+      const estadoClass = `estado-${estadoColor}`;
+      let html = `<div class="card p-3">
+        <div class="mb-2"><strong>ESTADO:</strong> <span class="${estadoClass}">${record.ESTADO}</span></div>`;
+      for (let key in record) {
+        if (key === 'ESTADO') continue;
+        html += `<div><strong>${key}:</strong> ${record[key]}</div>`;
+      }
+      html += `
+        <div class="mt-3">
+          <textarea class="form-control mb-2" id="comment-box" rows="2" placeholder="Añadir comentario..."></textarea>
+          <button class="btn btn-success" onclick='addComment(${JSON.stringify(record)})'>Guardar comentario</button>
+        </div>
+      </div>`;
+
+      $('#results-container').html(html);
+    }
+
+    function addComment(record) {
+      const comment = $('#comment-box').val();
+      if (!comment) return alert('Comentario vacío');
+
+      $.post({
+        url: '/add_comment',
+        contentType: 'application/json',
+        data: JSON.stringify({ record: record, comment: comment }),
+        success: res => {
+          alert(res.message || 'Comentario añadido');
+          $('#comment-box').val('');
+        },
+        error: err => alert('Error al guardar el comentario')
+      });
+    }
+  </script>
 </body>
 </html>

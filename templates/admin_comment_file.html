@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}Ver Comentarios - {{ filename }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Comentarios del Archivo: <code>{{ filename }}</code></h2>
+
+{% if comments %}
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Cédula</th>
+          <th>Nombre</th>
+          <th>Comunidad</th>
+          <th>Comentario</th>
+          <th>Fecha/Hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in comments %}
+        <tr>
+          <td>{{ c.line_number }}</td>
+          <td>{{ c.cedula }}</td>
+          <td>{{ c.nombre }}</td>
+          <td>{{ c.comunidad }}</td>
+          <td>{{ c.comment }}</td>
+          <td>{{ c.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-warning">No se encontraron comentarios en este archivo.</div>
+{% endif %}
+
+<a href="{{ url_for('admin_list_comments') }}" class="btn btn-secondary mt-3">&larr; Volver a Comentarios</a>
+{% endblock %}
