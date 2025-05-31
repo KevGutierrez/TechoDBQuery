@@ -24,6 +24,10 @@ app.static_folder = 'static'
 def tojsonfilter(obj):
     return json.dumps(obj)
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename)
+
 def init_database():
     """Initialize the database and required files"""
     try:
