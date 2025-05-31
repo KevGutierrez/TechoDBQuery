@@ -1,171 +1,381 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Consulta de Registros - TECHO</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background-color: #f9f9f9;
-    }
-    h1, .btn, .form-label {
-      font-family: 'Fredoka', sans-serif;
-    }
-    .estado-caracterizado { background-color: #954B9722; color: #954B97; border-radius: 8px; padding: 4px 8px; }
-    .estado-encuestado   { background-color: #0092DD22; color: #0092DD; border-radius: 8px; padding: 4px 8px; }
-    .estado-preasignado  { background-color: #FDC53322; color: #FDC533; border-radius: 8px; padding: 4px 8px; }
-    .estado-asignado     { background-color: #2FAC6622; color: #2FAC66; border-radius: 8px; padding: 4px 8px; }
-    .estado-inactivo     { background-color: #E9436222; color: #E94362; border-radius: 8px; padding: 4px 8px; }
-    .small-label {
-      font-size: 0.8rem;
-      color: #666;
-    }
-    .card:hover {
-      background-color: #f0f0f0;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Registros</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: #f5f5f5; }
+        .header { background: #0092DD; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.2rem; font-weight: 600; }
+        .sync-info { font-size: 0.8rem; opacity: 0.9; }
+        .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+        .logo { text-align: center; margin-bottom: 1.5rem; }
+        .logo img { height: 80px; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #0092DD; font-weight: 500; }
+        select, input { width: 100%; padding: 0.75rem; border: 2px solid #0092DD; border-radius: 8px; font-size: 1rem; }
+        select:focus, input:focus { outline: none; border-color: #0066AA; }
+        .filter-section { background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; }
+        .filter-chips { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .chip { background: rgba(0, 146, 221, 0.1); color: #0092DD; padding: 0.25rem 0.5rem; border-radius: 16px; font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem; }
+        .chip .close { cursor: pointer; font-weight: bold; }
+        .search-container { position: relative; }
+        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .suggestion { padding: 0.75rem; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 0.5rem; }
+        .suggestion:hover { background: #f0f0f0; }
+        .suggestion:last-child { border-bottom: none; }
+        .search-row { display: flex; gap: 0.5rem; align-items: center; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        .btn-primary { background: #0092DD; color: white; flex: 1; }
+        .btn-filter { background: transparent; color: #0092DD; border: 2px solid #0092DD; padding: 0.5rem; border-radius: 8px; }
+        .btn-filter.active { background: #0092DD; color: white; }
+        .results { margin-top: 2rem; }
+        .result-card { background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
+        .result-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .result-name { font-weight: bold; color: #0092DD; margin-bottom: 0.5rem; }
+        .result-details { font-size: 0.9rem; color: #666; }
+        .single-result { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .estado-badge { padding: 1rem; text-align: center; border-radius: 8px; font-weight: bold; margin-bottom: 1rem; }
+        .detail-row { display: flex; margin-bottom: 0.75rem; padding: 0.75rem; background: #f9f9f9; border-radius: 8px; }
+        .detail-label { font-weight: bold; color: #0092DD; flex: 1; }
+        .detail-value { flex: 2; }
+        .warning-icon { color: orange; margin-right: 0.5rem; }
+        .sync-icon { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .loading { opacity: 0.6; pointer-events: none; }
+    </style>
 </head>
 <body>
-  <div class="container py-4">
-    <div class="text-center mb-4">
-      <img src="/static/logo.png" alt="Logo" height="80">
-      <h1 class="mt-2">Consulta de Registros</h1>
-      {% if db_info.last_modified %}
-        <p class="small-label">Última sync: {{ db_info.last_modified.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-      {% endif %}
+    <div class="header">
+        <div>
+            <h1>Consulta de Registros</h1>
+            <div class="sync-info" id="syncInfo">
+                {% if db_info.last_modified %}
+                    Última sync: {{ db_info.last_modified.strftime('%d/%m %H:%M') }}
+                {% endif %}
+            </div>
+        </div>
+        <div>
+            {% if has_unsynced_comments %}
+                <button onclick="showCommentsDialog()" title="Comentarios sin sincronizar" style="background:transparent;border:none;color:orange;font-size:1.2rem;margin-right:0.5rem;">⚠️</button>
+                <button onclick="showCommentsDialog()" title="Ver comentarios" style="background:transparent;border:none;color:white;font-size:1.2rem;margin-right:0.5rem;">💬</button>
+            {% endif %}
+            <button onclick="syncDatabase()" id="syncBtn" title="Sincronizar" style="background:transparent;border:none;color:white;font-size:1.2rem;">🔄</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="logo">
+            <img src="/static/logo.png" alt="Logo" onerror="this.style.display='none'">
+        </div>
+        
+        <div class="filter-section" id="filterSection">
+            <div class="form-group">
+                <label>Filtrar por Comunidad</label>
+                <select id="comunidadFilter">
+                    <option value="">Todas</option>
+                    <option value="Granizal">Granizal</option>
+                    <option value="La Honda">La Honda</option>
+                    <option value="La Nueva Jerusalén">La Nueva Jerusalén</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filtrar por Estado</label>
+                <select id="estadoFilter">
+                    <option value="">Todos</option>
+                    <option value="caracterizado">Caracterizado</option>
+                    <option value="encuestado">Encuestado</option>
+                    <option value="preasignado">Preasignado</option>
+                    <option value="asignado">Asignado</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filter-chips" id="filterChips"></div>
+        
+        <div class="form-group">
+            <label>Buscar por</label>
+            <select id="searchField">
+                <option value="CEDULA">CÉDULA</option>
+                <option value="CONTACTO 1">CONTACTO (Celular)</option>
+                <option value="NOMBRE COMPLETO">NOMBRE</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Ingrese número de cédula">
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+        </div>
+        
+        <div class="search-row">
+            <button class="btn btn-primary" onclick="search()">Buscar</button>
+            <button class="btn-filter" id="filterBtn" onclick="toggleFilters()">🔍</button>
+        </div>
+        
+        <div class="results" id="results"></div>
     </div>
 
-    <form id="search-form" class="mb-4">
-      <div class="row g-2">
-        <div class="col-md-4">
-          <label for="field" class="form-label">Buscar por</label>
-          <select class="form-select" id="field" name="field">
-            <option value="CEDULA">CÉDULA</option>
-            <option value="CONTACTO 1">CONTACTO (Celular)</option>
-            <option value="NOMBRE COMPLETO">NOMBRE</option>
-          </select>
-        </div>
-        <div class="col-md-5">
-          <label for="value" class="form-label">Valor</label>
-          <input type="text" class="form-control" id="value" name="value" placeholder="Ingrese valor de búsqueda">
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100">Buscar</button>
-        </div>
-      </div>
-
-      <div class="row g-2 mt-3">
-        <div class="col-md-6">
-          <label for="comunidad" class="form-label">Filtrar por Comunidad</label>
-          <select class="form-select" id="comunidad" name="comunidad">
-            <option value="Todas">Todas</option>
-            <option value="La Nueva Jerusalén">La Nueva Jerusalén</option>
-            <option value="La Honda">La Honda</option>
-            <option value="Granizal">Granizal</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label for="estado" class="form-label">Filtrar por Estado</label>
-          <select class="form-select" id="estado" name="estado">
-            <option value="Todos">Todos</option>
-            <option value="caracterizado">Caracterizado</option>
-            <option value="encuestado">Encuestado</option>
-            <option value="preasignado">Preasignado</option>
-            <option value="asignado">Asignado</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
-        </div>
-      </div>
-    </form>
-
-    <div id="recent-searches" class="mb-4"></div>
-
-    <div id="results-container"></div>
-
-    {% if has_unsynced_comments %}
-      <div class="alert alert-warning mt-4">
-        Hay comentarios sin sincronizar. <a href="/comments">Ver comentarios</a>
-      </div>
-    {% endif %}
-
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-    $('#search-form').on('submit', function(e) {
-      e.preventDefault();
-      const data = {
-        field: $('#field').val(),
-        value: $('#value').val(),
-        filters: {
-          comunidad: $('#comunidad').val(),
-          estado: $('#estado').val()
+    <script>
+        let currentResults = [];
+        let selectedRecord = null;
+        let recentSearches = {{ recent_searches | tojsonfilter }};
+        
+        document.getElementById('searchField').addEventListener('change', updatePlaceholder);
+        document.getElementById('searchInput').addEventListener('focus', showSuggestions);
+        document.getElementById('searchInput').addEventListener('blur', () => setTimeout(hideSuggestions, 200));
+        document.getElementById('searchInput').addEventListener('input', filterSuggestions);
+        document.getElementById('searchInput').addEventListener('keypress', e => e.key === 'Enter' && search());
+        document.getElementById('comunidadFilter').addEventListener('change', updateFilterChips);
+        document.getElementById('estadoFilter').addEventListener('change', updateFilterChips);
+        
+        function updatePlaceholder() {
+            const field = document.getElementById('searchField').value;
+            const input = document.getElementById('searchInput');
+            const placeholders = {
+                'CEDULA': 'Ingrese número de cédula',
+                'CONTACTO 1': 'Ingrese número de celular',
+                'NOMBRE COMPLETO': 'Ingrese nombre (búsqueda parcial)'
+            };
+            input.placeholder = placeholders[field];
+            input.type = field === 'NOMBRE COMPLETO' ? 'text' : 'number';
+            hideSuggestions();
         }
-      };
-
-      $.post({
-        url: '/search',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: res => {
-          const container = $('#results-container');
-          container.empty();
-          if (res.results.length === 0) {
-            container.append('<p class="text-muted">No se encontraron resultados.</p>');
-          } else if (res.results.length > 1 && data.field === 'NOMBRE COMPLETO') {
-            res.results.forEach(r => {
-              container.append(`
-                <div class="card mb-2 p-2" onclick="showDetails(${encodeURIComponent(JSON.stringify(r))})">
-                  <strong>${r["NOMBRE COMPLETO"]}</strong><br>
-                  <span class="text-muted">${r.COMUNIDAD} | ${r.CEDULA}</span>
-                </div>`);
-            });
-          } else {
-            showDetails(res.results[0]);
-          }
-        },
-        error: err => alert('Error en búsqueda')
-      });
-    });
-
-    function showDetails(record) {
-      const estadoColor = record.ESTADO?.toLowerCase();
-      const estadoClass = `estado-${estadoColor}`;
-      let html = `<div class="card p-3">
-        <div class="mb-2"><strong>ESTADO:</strong> <span class="${estadoClass}">${record.ESTADO}</span></div>`;
-      for (let key in record) {
-        if (key === 'ESTADO') continue;
-        html += `<div><strong>${key}:</strong> ${record[key]}</div>`;
-      }
-      html += `
-        <div class="mt-3">
-          <textarea class="form-control mb-2" id="comment-box" rows="2" placeholder="Añadir comentario..."></textarea>
-          <button class="btn btn-success" onclick='addComment(${JSON.stringify(record)})'>Guardar comentario</button>
-        </div>
-      </div>`;
-
-      $('#results-container').html(html);
-    }
-
-    function addComment(record) {
-      const comment = $('#comment-box').val();
-      if (!comment) return alert('Comentario vacío');
-
-      $.post({
-        url: '/add_comment',
-        contentType: 'application/json',
-        data: JSON.stringify({ record: record, comment: comment }),
-        success: res => {
-          alert(res.message || 'Comentario añadido');
-          $('#comment-box').val('');
-        },
-        error: err => alert('Error al guardar el comentario')
-      });
-    }
-  </script>
+        
+        function showSuggestions() {
+            const field = document.getElementById('searchField').value;
+            const suggestions = recentSearches[field] || [];
+            const container = document.getElementById('suggestions');
+            
+            if (suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            container.innerHTML = suggestions.map(s => 
+                `<div class="suggestion" onclick="selectSuggestion('${s}')">
+                    <span>🕒</span> ${s}
+                </div>`
+            ).join('');
+            container.style.display = 'block';
+        }
+        
+        function hideSuggestions() {
+            document.getElementById('suggestions').style.display = 'none';
+        }
+        
+        function filterSuggestions() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const field = document.getElementById('searchField').value;
+            const suggestions = (recentSearches[field] || []).filter(s => s.toLowerCase().includes(input));
+            const container = document.getElementById('suggestions');
+            
+            if (suggestions.length === 0 || input === '') {
+                hideSuggestions();
+                return;
+            }
+            
+            container.innerHTML = suggestions.map(s => 
+                `<div class="suggestion" onclick="selectSuggestion('${s}')">
+                    <span>🕒</span> ${s}
+                </div>`
+            ).join('');
+            container.style.display = 'block';
+        }
+        
+        function selectSuggestion(value) {
+            document.getElementById('searchInput').value = value;
+            hideSuggestions();
+            search();
+        }
+        
+        function toggleFilters() {
+            const section = document.getElementById('filterSection');
+            const btn = document.getElementById('filterBtn');
+            const isVisible = section.style.display === 'block';
+            section.style.display = isVisible ? 'none' : 'block';
+            btn.classList.toggle('active', !isVisible);
+        }
+        
+        function updateFilterChips() {
+            const comunidad = document.getElementById('comunidadFilter').value;
+            const estado = document.getElementById('estadoFilter').value;
+            const container = document.getElementById('filterChips');
+            
+            let chips = '';
+            if (comunidad) chips += `<div class="chip">Comunidad: ${comunidad} <span class="close" onclick="clearFilter('comunidad')">✕</span></div>`;
+            if (estado) chips += `<div class="chip">Estado: ${estado} <span class="close" onclick="clearFilter('estado')">✕</span></div>`;
+            
+            container.innerHTML = chips;
+        }
+        
+        function clearFilter(type) {
+            if (type === 'comunidad') document.getElementById('comunidadFilter').value = '';
+            if (type === 'estado') document.getElementById('estadoFilter').value = '';
+            updateFilterChips();
+        }
+        
+        function getEstadoStyle(estado) {
+            const styles = {
+                'caracterizado': { bg: 'rgba(149, 75, 151, 0.1)', color: '#954B97' },
+                'encuestado': { bg: 'rgba(0, 146, 221, 0.1)', color: '#0092DD' },
+                'preasignado': { bg: 'rgba(253, 197, 51, 0.1)', color: '#fdc533' },
+                'asignado': { bg: 'rgba(47, 172, 102, 0.1)', color: '#2fac66' },
+                'inactivo': { bg: 'rgba(233, 67, 98, 0.1)', color: '#e94362' }
+            };
+            return styles[estado?.toLowerCase()] || { bg: '#f0f0f0', color: '#333' };
+        }
+        
+        async function search() {
+            const field = document.getElementById('searchField').value;
+            const value = document.getElementById('searchInput').value.trim();
+            const comunidad = document.getElementById('comunidadFilter').value;
+            const estado = document.getElementById('estadoFilter').value;
+            
+            if (!value) return;
+            
+            const container = document.getElementById('results');
+            container.innerHTML = '<div style="text-align:center;padding:2rem;">Buscando...</div>';
+            
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        field, value,
+                        filters: { comunidad, estado }
+                    })
+                });
+                
+                const data = await response.json();
+                currentResults = data.results;
+                displayResults();
+            } catch (error) {
+                container.innerHTML = '<div style="color:red;text-align:center;padding:2rem;">Error en la búsqueda</div>';
+            }
+        }
+        
+        function displayResults() {
+            const container = document.getElementById('results');
+            
+            if (currentResults.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:2rem;">No se encontraron resultados</div>';
+                return;
+            }
+            
+            if (currentResults.length === 1) {
+                displaySingleResult(currentResults[0]);
+                return;
+            }
+            
+            const html = `
+                <h3 style="color:#0092DD;margin-bottom:1rem;">Se encontraron ${currentResults.length} resultados:</h3>
+                ${currentResults.map((result, index) => `
+                    <div class="result-card" onclick="selectResult(${index})">
+                        <div class="result-name">${result['NOMBRE COMPLETO'] || 'Sin nombre'}</div>
+                        <div class="result-details">
+                            Comunidad: ${result['COMUNIDAD'] || 'N/A'}<br>
+                            Cédula: ${result['CEDULA'] || 'N/A'}
+                        </div>
+                        <div style="text-align:right;color:#0092DD;">→</div>
+                    </div>
+                `).join('')}
+            `;
+            container.innerHTML = html;
+        }
+        
+        function selectResult(index) {
+            selectedRecord = currentResults[index];
+            displaySingleResult(selectedRecord);
+        }
+        
+        function displaySingleResult(record) {
+            const style = getEstadoStyle(record['ESTADO']);
+            const backBtn = currentResults.length > 1 ? 
+                `<button onclick="displayResults()" style="margin-bottom:1rem;padding:0.5rem 1rem;background:#ddd;border:none;border-radius:4px;">← Volver a resultados</button>` : '';
+            
+            const html = `
+                <div class="single-result">
+                    ${backBtn}
+                    ${record['ESTADO'] ? `
+                        <div class="estado-badge" style="background:${style.bg};color:${style.color};">
+                            ESTADO: ${record['ESTADO']}
+                        </div>
+                    ` : ''}
+                    <button onclick="showAddCommentDialog()" style="width:100%;margin-bottom:1rem;padding:0.75rem;background:#0092DD;color:white;border:none;border-radius:8px;font-weight:600;">
+                        💬 Añadir Comentario
+                    </button>
+                    ${Object.entries(record).filter(([key]) => key !== 'ESTADO').map(([key, value]) => `
+                        <div class="detail-row">
+                            <div class="detail-label">${key}:</div>
+                            <div class="detail-value">${value || '-'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        function showAddCommentDialog() {
+            if (!selectedRecord) return;
+            
+            const comment = prompt('Escriba su comentario:');
+            if (!comment || !comment.trim()) return;
+            
+            fetch('/add_comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    record: selectedRecord,
+                    comment: comment.trim()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Comentario añadido, recuerda sincronizar');
+                    location.reload();
+                } else {
+                    alert('Error al guardar comentario');
+                }
+            })
+            .catch(() => alert('Error al guardar comentario'));
+        }
+        
+        function showCommentsDialog() {
+            window.location.href = '/comments';
+        }
+        
+        async function syncDatabase() {
+            const btn = document.getElementById('syncBtn');
+            btn.innerHTML = '<span class="sync-icon">🔄</span>';
+            btn.style.pointerEvents = 'none';
+            
+            try {
+                const response = await fetch('/sync_database', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Base de datos sincronizada correctamente');
+                    location.reload();
+                } else {
+                    alert('Error al sincronizar');
+                }
+            } catch (error) {
+                alert('Error al sincronizar');
+            } finally {
+                btn.innerHTML = '🔄';
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+        
+        updatePlaceholder();
+        updateFilterChips();
+    </script>
 </body>
 </html>
