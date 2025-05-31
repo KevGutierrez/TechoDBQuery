@@ -57,6 +57,110 @@ def init_database():
         print(f"Error initializing database: {str(e)}")
         return False
 
+# Add these new routes and functions
+@app.route('/edit_comment', methods=['POST'])
+def edit_comment():
+    try:
+        data = request.get_json()
+        comment_id = data.get('commentId')
+        new_comment = data.get('newComment')
+        
+        if not comment_id or not new_comment:
+            return jsonify({'error': 'Datos incompletos'}), 400
+        
+        # Read all comments
+        comments = []
+        with open(LOG_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            comments = list(reader)
+        
+        # Find and update the comment
+        found = False
+        for comment in comments:
+            if comment.get('id') == comment_id:
+                comment['comment'] = new_comment
+                comment['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                found = True
+                break
+        
+        if not found:
+            return jsonify({'error': 'Comentario no encontrado'}), 404
+        
+        # Write back all comments
+        with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=comments[0].keys())
+            writer.writeheader()
+            writer.writerows(comments)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.error(f"Edit comment error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/delete_comment', methods=['POST'])
+def delete_comment():
+    try:
+        data = request.get_json()
+        comment_id = data.get('commentId')
+        
+        if not comment_id:
+            return jsonify({'error': 'ID de comentario requerido'}), 400
+        
+        # Read all comments
+        comments = []
+        with open(LOG_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            comments = list(reader)
+        
+        # Filter out the comment to delete
+        updated_comments = [c for c in comments if c.get('id') != comment_id]
+        
+        if len(updated_comments) == len(comments):
+            return jsonify({'error': 'Comentario no encontrado'}), 404
+        
+        # Write back remaining comments
+        with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=updated_comments[0].keys() if updated_comments else ['id', 'cedula', 'nombre', 'comunidad', 'comment', 'timestamp'])
+            writer.writeheader()
+            writer.writerows(updated_comments)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.error(f"Delete comment error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_unsynced_comments')
+def get_unsynced_comments_api():
+    """Get all unsynced comments as JSON"""
+    try:
+        comments = []
+        if os.path.exists(LOG_FILE):
+            with open(LOG_FILE, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                comments = list(reader)
+        return jsonify({'comments': comments})
+    except Exception as e:
+        app.logger.error(f"Get comments error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+# Update the save_comment function to include an ID
+def save_comment(record_data, comment_text):
+    """Save a comment to the log file with an ID"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    comment_id = datetime.now().strftime("%Y%m%d%H%M%S")  # Use timestamp as ID
+    
+    # Extract key information from record
+    cedula = record_data.get('CEDULA', 'N/A')
+    nombre = record_data.get('NOMBRE COMPLETO', 'N/A')
+    comunidad = record_data.get('COMUNIDAD', 'N/A')
+    
+    # Append to CSV
+    with open(LOG_FILE, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow([comment_id, cedula, nombre, comunidad, comment_text, timestamp])
+
 # Database helper functions
 def get_database_connection():
     """Get database connection"""
@@ -205,36 +309,60 @@ def add_comment():
         app.logger.error(f"Add comment error: {str(e)}")
         return jsonify({'error': f'Error al guardar comentario: {str(e)}'}), 500
 
+# Replace the existing sync_database function with this one
 @app.route('/sync_database', methods=['POST'])
 def sync_database():
-    """Simulate database sync"""
+    """Sync comments with external service and clear local comments"""
     try:
-        # For testing, we'll just return success
+        # Get all unsynced comments
+        comments = []
+        if os.path.exists(LOG_FILE):
+            with open(LOG_FILE, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                comments = list(reader)
+
+        if comments:
+            try:
+                # Try to upload comments to external service
+                response = requests.post(
+                    'https://techodbquery.onrender.com/upload_comments',
+                    json={'comments': comments},
+                    timeout=10  # 10 seconds timeout
+                )
+                
+                if response.status_code != 200:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Error al cargar comentarios al servidor externo'
+                    }), 500
+
+                # If successful, clear the comments file
+                with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['id', 'cedula', 'nombre', 'comunidad', 'comment', 'timestamp'])
+                
+            except requests.RequestException as e:
+                app.logger.error(f"External service error: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Error de conexión con el servidor externo'
+                }), 500
+        
         return jsonify({
             'success': True, 
-            'message': 'Base de datos sincronizada correctamente',
+            'message': 'Comentarios sincronizados correctamente',
             'timestamp': datetime.now().isoformat()
         })
+
     except Exception as e:
         app.logger.error(f"Sync error: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
+    
 # Helper functions for comments
 def has_unsynced_comments():
     """Check if there are unsynced comments"""
     return os.path.exists(LOG_FILE) and os.path.getsize(LOG_FILE) > len('cedula,nombre,comunidad,comment,timestamp\n')
 
-def get_unsynced_comments():
-    """Get all unsynced comments"""
-    comments = []
-    if os.path.exists(LOG_FILE):
-        try:
-            with open(LOG_FILE, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                comments = list(reader)
-        except:
-            pass
-    return comments
 
 def save_comment(record_data, comment_text):
     """Save a comment to the log file"""

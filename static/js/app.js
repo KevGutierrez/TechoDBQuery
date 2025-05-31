@@ -237,6 +237,96 @@ function showCommentsDialog() {
     window.location.href = '/comments';
 }
 
+// Add these functions to your existing app.js
+
+function editComment(commentId) {
+    const newComment = prompt('Editar comentario:');
+    if (!newComment || !newComment.trim()) return;
+
+    fetch('/edit_comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            commentId,
+            newComment: newComment.trim()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Comentario actualizado');
+            location.reload();
+        } else {
+            alert('Error al actualizar comentario');
+        }
+    })
+    .catch(() => alert('Error al actualizar comentario'));
+}
+
+function deleteComment(commentId) {
+    if (!confirm('¿Está seguro de eliminar este comentario?')) return;
+
+    fetch('/delete_comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Comentario eliminado');
+            location.reload();
+        } else {
+            alert('Error al eliminar comentario');
+        }
+    })
+    .catch(() => alert('Error al eliminar comentario'));
+}
+
+// Update the syncDatabase function
+async function syncDatabase() {
+    const btn = document.getElementById('syncBtn');
+    btn.innerHTML = '<span class="sync-icon">🔄</span>';
+    btn.style.pointerEvents = 'none';
+    
+    try {
+        // First get all unsynced comments
+        const commentsResponse = await fetch('/get_unsynced_comments');
+        const commentsData = await commentsResponse.json();
+        
+        if (commentsData.comments && commentsData.comments.length > 0) {
+            // Try to upload comments to external service
+            const uploadResponse = await fetch('https://techodbquery.onrender.com/upload_comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comments: commentsData.comments })
+            });
+            
+            if (!uploadResponse.ok) {
+                throw new Error('Error al cargar comentarios');
+            }
+            
+            // If successful, mark comments as synced
+            const syncResponse = await fetch('/sync_database', { method: 'POST' });
+            const syncData = await syncResponse.json();
+            
+            if (syncData.success) {
+                alert('Comentarios cargados correctamente');
+                location.reload();
+            } else {
+                throw new Error('Error al sincronizar');
+            }
+        } else {
+            alert('No hay comentarios para sincronizar');
+        }
+    } catch (error) {
+        alert(error.message || 'Error al sincronizar');
+    } finally {
+        btn.innerHTML = '🔄';
+        btn.style.pointerEvents = 'auto';
+    }
+}
+
 async function syncDatabase() {
     const btn = document.getElementById('syncBtn');
     btn.innerHTML = '<span class="sync-icon">🔄</span>';
