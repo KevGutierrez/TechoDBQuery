@@ -129,15 +129,23 @@ def delete_comment():
         app.logger.error(f"Delete comment error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/get_unsynced_comments')
-def get_unsynced_comments_api():
-    """Get all unsynced comments as JSON"""
-    try:
-        comments = []
-        if os.path.exists(LOG_FILE):
+def get_unsynced_comments():
+    """Get all unsynced comments from the log file"""
+    comments = []
+    if os.path.exists(LOG_FILE):
+        try:
             with open(LOG_FILE, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 comments = list(reader)
+        except Exception as e:
+            app.logger.error(f"Error reading comments: {str(e)}")
+    return comments
+
+@app.route('/get_unsynced_comments')
+def get_unsynced_comments_api():
+    """API endpoint to get unsynced comments"""
+    try:
+        comments = get_unsynced_comments()
         return jsonify({'comments': comments})
     except Exception as e:
         app.logger.error(f"Get comments error: {str(e)}")
